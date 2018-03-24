@@ -7,3 +7,7 @@ for the
 I am using an old-ish
 `Raspberry Pi Model B Plus Rev 1.2`
 for now.
+
+## Python
+
+Simplistic Python scripts using the "official" Sense HAT API.
