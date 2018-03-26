@@ -11,3 +11,7 @@ for now.
 ## Python
 
 Simplistic Python scripts using the "official" Sense HAT API.
+
+## C
+
+Low-level C code interfacing with the Sense HAT more directly.
