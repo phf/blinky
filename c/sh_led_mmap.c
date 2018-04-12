@@ -5,11 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-
-#define SH_LED_MMAP_ID "RPi-Sense FB"
 
 static uint16_t *mapped; /* mapped LEDs or NULL if not yet mapped */
 
@@ -27,11 +26,12 @@ static uint16_t *try_path(const char *path)
 		goto out;
 	}
 
-	if (strcmp(info.id, SH_LED_MMAP_ID) != 0) {
+	if (strcmp(info.id, "RPi-Sense FB") != 0) {
 		goto out;
 	}
 
-	p = mmap(NULL, SH_LED_MMAP_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	p = mmap(NULL, SH_LED_MMAP_SIZE,
+			PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	if (p == MAP_FAILED) {
 		p = NULL;
 	}
@@ -40,15 +40,23 @@ out:
 	return p;
 }
 
+/*
+ * Somewhat simple-minded compared to scandir() but doesn't allocate extra
+ * memory and can't fail in weird ways.
+ */
 uint16_t *sh_led_mmap_open(void)
 {
 	if (mapped != NULL) {
 		return mapped;
 	}
 
-	char path[16];
+	char path[32];
 
-	for (int i = 0; i <= FB_MAX; i++) {
+	/*
+	 * FB_MAX is 32 and name implies <= but documentation says 0 to 31
+	 * see https://www.kernel.org/doc/Documentation/fb/framebuffer.txt
+	 */
+	for (int i = 0; i < FB_MAX; i++) {
 		snprintf(path, sizeof(path), "/dev/fb%d", i);
 
 		uint16_t *p = try_path(path);
@@ -69,4 +77,13 @@ void sh_led_mmap_close(uint16_t *p)
 
 	munmap(mapped, SH_LED_MMAP_SIZE);
 	mapped = NULL;
+}
+
+void sh_led_mmap_sync(void)
+{
+	if (mapped == NULL) {
+		return;
+	}
+
+	msync(mapped, SH_LED_MMAP_SIZE, MS_SYNC);
 }
