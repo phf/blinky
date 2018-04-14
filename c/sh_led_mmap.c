@@ -71,7 +71,7 @@ uint16_t *sh_led_mmap_open(void)
 
 void sh_led_mmap_close(uint16_t *p)
 {
-	if (p != mapped || mapped == NULL) {
+	if (mapped != p || mapped == NULL) {
 		return;
 	}
 
